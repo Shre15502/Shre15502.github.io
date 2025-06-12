@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Live & Recorded Cricket Matches</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 800px;
+      padding: 20px;
+    }
+    input, textarea, button {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+      padding: 10px;
+    }
+    video {
+      width: 100%;
+      margin-top: 10px;
+    }
+    hr {
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏏 Cricket Match Portal</h1>
+
+  <!-- Admin Upload Section -->
+  <section>
+    <h2>Upload Live Match</h2>
+    <input type="text" id="liveTitle" placeholder="Live Match Title">
+    <input type="file" id="liveVideoFile" accept="video/*">
+    <button onclick="setLiveMatch()">Upload Live Match</button>
+
+    <h2>Upload Recorded Match</h2>
+    <input type="text" id="matchTitle" placeholder="Recorded Match Title">
+    <textarea id="matchDescription" placeholder="Match Description"></textarea>
+    <input type="file" id="videoFile" accept="video/*">
+    <button onclick="addRecordedMatch()">Upload Recorded Match</button>
+  </section>
+
+  <hr>
+
+  <!-- Viewer Section -->
+  <section>
+    <h2>🎥 Live Cricket Match</h2>
+    <div id="liveMatchSection">
+      <p>No live match uploaded yet.</p>
+    </div>
+
+    <hr>
+
+    <h2>📺 Recorded Matches</h2>
+    <div id="publicMatchList"></div>
+  </section>
+
+  <script>
+    let recordedMatches = JSON.parse(localStorage.getItem("recordedMatches")) || [];
+    let liveMatch = JSON.parse(localStorage.getItem("liveMatch")) || null;
+
+    function addRecordedMatch() {
+      const title = document.getElementById("matchTitle").value.trim();
+      const description = document.getElementById("matchDescription").value.trim();
+      const fileInput = document.getElementById("videoFile");
+      const file = fileInput.files[0];
+
+      if (!title || !description || !file) {
+        alert("Please fill all fields and select a video.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        recordedMatches.push({ title, description, videoURL: e.target.result });
+        localStorage.setItem("recordedMatches", JSON.stringify(recordedMatches));
+        renderMatches();
+        alert("Recorded match uploaded!");
+        fileInput.value = '';
+        document.getElementById("matchTitle").value = '';
+        document.getElementById("matchDescription").value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function setLiveMatch() {
+      const title = document.getElementById("liveTitle").value.trim();
+      const file = document.getElementById("liveVideoFile").files[0];
+
+      if (!title || !file) {
+        alert("Please provide a title and select a video.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        liveMatch = { title, videoURL: e.target.result };
+        localStorage.setItem("liveMatch", JSON.stringify(liveMatch));
+        renderMatches();
+        alert("Live match uploaded!");
+        document.getElementById("liveTitle").value = '';
+        document.getElementById("liveVideoFile").value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderMatches() {
+      const liveSection = document.getElementById("liveMatchSection");
+      const publicList = document.getElementById("publicMatchList");
+
+      // Render live match
+      if (liveMatch) {
+        liveSection.innerHTML = `
+          <h3>${liveMatch.title}</h3>
+          <video controls src="${liveMatch.videoURL}"></video>
+        `;
+      } else {
+        liveSection.innerHTML = `<p>No live match uploaded yet.</p>`;
+      }
+
+      // Render recorded matches
+      publicList.innerHTML = '';
+      recordedMatches.forEach(match => {
+        const html = `
+          <div>
+            <h3>${match.title}</h3>
+            <p>${match.description}</p>
+            <video controls src="${match.videoURL}"></video>
+          </div>
+          <hr>
+        `;
+        publicList.innerHTML += html;
+      });
+    }
+
+    renderMatches();
+  </script>
+
+</body>
+</html>
